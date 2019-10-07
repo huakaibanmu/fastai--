@@ -1,4 +1,5 @@
-第四课的学习有以下个重点：
+<font face="黑体">
+第四课的学习有以下几个重点：
 1、NLP 
 文本分类（Text Classification）是自然语言处理领域很普遍的应用，可以用来完成垃圾邮件过滤、虚假新闻识别、医疗报告诊断、用户情感分类等任务。
 1.1 IMDb电影评论情绪分析实践
@@ -137,3 +138,4 @@ ULMFit：https://arxiv.org/pdf/1801.06146.pdf
 《ULMFiT》 阅读笔记：https://zhuanlan.zhihu.com/p/47344283
 https://blog.csdn.net/triplemeng/article/details/82828480
 
+</font>
