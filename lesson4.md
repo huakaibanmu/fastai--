@@ -6,23 +6,23 @@
 **文本分类（Text Classification）**是自然语言处理领域很普遍的应用，可以用来完成垃圾邮件过滤、虚假新闻识别、医疗报告诊断、用户情感分类等任务。
 ## 1.1 IMDb电影评论情绪分析实践  
 
-    假如有25000条数据，每条数据包括电影评论以及评论的情绪分类（1表示喜欢，0表示不喜欢）。在分析评论情绪时，需要对评论所属语种的语言基础和习惯有一定的了解，如果神经网络初始化权值都是随机设定的，25000条数据不足以生成一个效果很好的分类器。因此我们尝试使用迁移学习来获取更多与语言相关的信息，提升模型效果。   
-    在NLP问题的迁移学习中使用语言模型作为预训练模型，fastai创建了Language Model Zoo给不同语种和不同知识领域建立语言模型，在实践中我们将使用语言模型(a language model)作为预训练模型（为表述方便，下面提及的语言模型都是指英语领域内的语言模型）。语言模型“学习”了很多有关语言表达、世界运作的知识。给定一个句子的前面部分，语言模型可以预测后一个单词，在下面的例子中我们将使用从Wikipedia（维基百科）训练的模型作为预训练模型，为IMDB语言模型提供必要的语言知识和常识。   
-    Wikitext 103是Stephen Merity和他的同事共同建立的数据集，取Wikipedia篇幅最大文章的一部分后经预处理得到。在Wikitext 103基础上建立神经网络模型并通过训练不断调整权重后，模型在预测Wikipedia句子中下一个单词问题上有很好的效果。
-    预训练模型生成IMDB语言模型需要FineTuning（微调），预训练模型“学习”影评写法是一个自监督学习过程（ self supervised learnin），自监督学习属于监督学习，但它的标签不是人工产生的，而是从输入数据中得到的。
-整体步骤：获取Wikitext103预训练模型-finetune>IMDB语言模型->IMDB分类器
-1.1.1文本预处理，创建TextDataBunch
-Tokenization and Numericalization
-在预处理文本数据中，需要用到“分词Tokenization”和“数字化Numericalization”。
-分词：将句子根据“空格”、“连接词”、“标点”分割为标识符token，以“xx”开头的token为未知token。
-数字化：用数字表示token
-Vocab在fastai中是一个类，保存数字和token之间的对应关系。为了避免神经网络中权重矩阵太大，需要限制vocab的大小，默认vocab中不多于60000个词。如果一个词出现次数小于三次，该词不会进入vocab中。 比如用“xxunk”这一token表示出现次数小于三次的单词。
-其他未知token包括：
-xxfld：用来区分文本中的不同结构，比如概述（summary）、摘要（abstract）、正文（body）每种结构在文章中有着单独的区域，因此会被编号加以标记。如xxfld 1，xxfld 2
-xxup：表示下一个单词在原文本中是全大写的。文本中有全大写的单词时，分词时将大写全部转为小写并在前面加xxup。
-Create databunch
-使用data block API创建DataBunch有很多方式，需要根据数据类型、源文件类型等选择函数：
-	Where are the inputs and how to create them?（输入数据可能来自文件夹、csv表格或dataframe）
+   假如有25000条数据，每条数据包括电影评论以及评论的情绪分类（1表示喜欢，0表示不喜欢）。在分析评论情绪时，需要对评论所属语种的语言基础和习惯有一定的了解，如果神经网络初始化权值都是随机设定的，25000条数据不足以生成一个效果很好的分类器。因此我们尝试使用迁移学习来获取更多与语言相关的信息，提升模型效果。   
+   在NLP问题的迁移学习中使用语言模型作为预训练模型，fastai创建了Language Model Zoo给不同语种和不同知识领域建立语言模型，在实践中我们将使用语言模型(a language model)作为预训练模型（为表述方便，下面提及的语言模型都是指英语领域内的语言模型）。语言模型“学习”了很多有关语言表达、世界运作的知识。给定一个句子的前面部分，语言模型可以预测后一个单词，在下面的例子中我们将使用从Wikipedia（维基百科）训练的模型作为预训练模型，为IMDB语言模型提供必要的语言知识和常识。   
+   Wikitext 103是Stephen Merity和他的同事共同建立的数据集，取Wikipedia篇幅最大文章的一部分后经预处理得到。在Wikitext 103基础上建立神经网络模型并通过训练不断调整权重后，模型在预测Wikipedia句子中下一个单词问题上有很好的效果。
+   预训练模型生成IMDB语言模型需要FineTuning（微调），预训练模型“学习”影评写法是一个自监督学习过程（self supervised learning），自监督学习属于监督学习，但它的标签不是人工产生的，而是从输入数据中得到的。
+**整体步骤：获取Wikitext103预训练模型-finetune>IMDB语言模型->IMDB分类器**
+### 1.1.1文本预处理，创建TextDataBunch
+#### Tokenization and Numericalization
+  在预处理文本数据中，需要用到**“分词Tokenization”和“数字化Numericalization”**。
+  分词：将句子根据“空格”、“连接词”、“标点”分割为标识符token，以“xx”开头的token为未知token。
+  数字化：用数字表示token
+  Vocab在fastai中是一个类，保存数字和token之间的对应关系。为了避免神经网络中权重矩阵太大，需要限制vocab的大小，默认vocab中不多于60000个词。如果一个词出现次数小于三次，该词不会进入vocab中。 比如用“xxunk”这一token表示出现次数小于三次的单词。
+  其他未知token包括：
+  xxfld：用来区分文本中的不同结构，比如概述（summary）、摘要（abstract）、正文（body）每种结构在文章中有着单独的区域，因此会被编号加以标记。如xxfld 1，xxfld 2；
+  xxup：表示下一个单词在原文本中是全大写的。文本中有全大写的单词时，分词时将大写全部转为小写并在前面加xxup。
+#### Create databunch
+ 使用data block API创建DataBunch有很多方式，需要根据数据类型、源文件类型等选择函数：
+        Where are the inputs and how to create them?（输入数据可能来自文件夹、csv表格或dataframe）
 	How to split the data into a training and validation sets?（训练集、验证集可随机划分、通过某种索引方式划分或根据数据所在文件夹划分）
 	How to label the inputs?（label可能从csv文件或dataframe中获得，也可能从文件夹或某个特定函数中获得）
 	What transforms to apply?（可选择是否做数据增强）
@@ -30,42 +30,52 @@ Create databunch
 	How to wrap in dataloaders and create the DataBunch?
 （定义创建DataBunch的一些必要参数如batch size（批大小），collate function（将样本打包成批数据的函数）等）
 
-1.1.2模型训练
+### 1.1.2模型训练
 下面以Wikitext 103模型为预处理模型，再在IMDB整体数据集上做微调。具体模型训练步骤见jupyder文件。
-训练中常见问题
-（1）验证集比例设计成总体10%的技巧：
-训练过程中虽然不能使用测试集的标签，但是可以用测试集中的文本来微调语言模型。在训练语言模型时可以将训练集和测试集拼接在一起，分出小部分作为验证集，从而有更多的数据可用作训练集。如果当前只有一小部分标签数据或者在做Kaggle上NLP的任务时，可以把所有的text文本数据都用来训练语言模型。
-（2）模型训练时为什么每次要先fit_one_cycle(1 )迭代一次，调整最后几层的参数，再unfreeze，fit_one_cycle（）迭代更多次？
-learn.freeze()是为了避免被训练好的权重再被修改，而从fastai库中引用预训练模型时，预训练模型的权重默认就是’frozen’状态的，因此直接用fit_one_cycle()训练即可，运行learn.summary()可以看到’frozen’状态的层的属性’requires_grad = False’,梯度不会在这些层上计算。
+#### 训练中常见问题
+（1）验证集比例设计成总体10%的技巧：   
+
+  训练过程中虽然不能使用测试集的标签，但是可以用测试集中的文本来微调语言模型。在训练语言模型时可以将训练集和测试集拼接在一起，分出小部分作为验证集，从而有更多的数据可用作训练集。如果当前只有一小部分标签数据或者在做Kaggle上NLP的任务时，可以把所有的text文本数据都用来训练语言模型。
+（2）模型训练时为什么每次要先fit_one_cycle(1 )迭代一次，调整最后几层的参数，再unfreeze，fit_one_cycle（）迭代更多次？   
+
+  learn.freeze()是为了避免被训练好的权重再被修改，而从fastai库中引用预训练模型时，预训练模型的权重默认就是’frozen’状态的，因此直接用fit_one_cycle()训练即可，运行learn.summary()可以看到’frozen’状态的层的属性’requires_grad = False’,梯度不会在这些层上计算。
 一个神经网络最开始的几层大多数情况下用来理解一些低级的基础特征，比如图像分类问题中识别曲线、直线等，通过大规模数据的训练，预训练模型的前几层已经能很好识别这些特征。后面几层通常获取特定的数据集更高级、复杂的特征，通过全连接网络将前面层的输出结合起来再应用到现有的数据集上。
 
-训练模型的一般步骤
-（1）load the model
+#### 训练模型的一般步骤
+（1）load the model   
 
-（2）freeze the initial layers
-Learn.freeze()
-（3）training moel
-在fit_one_cycle()之前用lr_find() 寻找最佳学习率。
-Learn.fit_one_cycle()，在模型结构中有很多layer groups，仅仅训练最后一个layer group，也就是全连接网络，不要过多训练以防过拟合。
-（4）unfreeze the layers
-Learn.unfreeze()
-所有层都是可训练（requires_grad=True）
-（5）training model
-Learn.fit_one_cycle(2,max_lr = slice(le-6,le-4))
-最初几层学习率要设置比较小，因为前面几层权重不需要调整太多；因此随着层加深，学习率会逐渐提高，尤其全连接层需要更多的“微调”。
-（6）save model parameters
-Learn.save()
+（2）freeze the initial layers   
 
+ Learn.freeze()
+（3）training model   
 
-问题：创建LMdatabunch时候要花一些时间，是因为要做分词和数字化？？？
-Frank Hutter和他的一名同事提出可以用随机森林来找最优的超参，Auto ML也旨在建立模型来找出训练方案。
+ 在fit_one_cycle()之前用lr_find() 寻找最佳学习率。Learn.fit_one_cycle()，在模型结构中有很多layer groups，仅仅训练最后一个layer group，也就是全连接网络，不要过多训练以防过拟合。   
+ 
+（4）unfreeze the layers   
 
-1.2情绪分析算法—ULMFiT
-我们进行以上操作遵循的是ULMFiT（Universal Language Model Fine-tuning for Text Classification）的思路，ULMFiT（基于微调的通用语言模型）是Jeremy Howard和Sebastian Ruder在2018年发表的一篇论文中提出来的，在六个文本分类任务中取得显著效果。
-ULMFiT方法包括三个阶段：
-1、General-domain LM pretraining
-首先在wiki上预训练语言模型，从而学到大规模语料的语法特性。
-2、Target task LM ﬁne-tuning
+ Learn.unfreeze()   
+ 
+ 所有层都是可训练（requires_grad=True）   
+ 
+（5）training model   
+
+ Learn.fit_one_cycle(2,max_lr = slice(le-6,le-4))，最初几层学习率要设置比较小，因为前面几层权重不需要调整太多；因此随着层加深，学习率会逐渐提高，尤其全连接层需要更多的“微调”。   
+ 
+（6）save model parameters   
+
+ Learn.save()   
+
+### 1.2情绪分析算法—ULMFiT
+  我们进行以上操作遵循的是ULMFiT（Universal Language Model Fine-tuning for Text Classification）的思路，ULMFiT（基于微调的通用语言模型）是Jeremy Howard和Sebastian Ruder在2018年发表的一篇论文中提出来的，在六个文本分类任务中取得显著效果。   
+  
+  ULMFiT方法包括三个阶段：  
+  
+  1、General-domain LM pretraining   
+  
+  首先在wiki上预训练语言模型，从而学到大规模语料的语法特性。   
+  
+  2、Target task LM ﬁne-tuning   
+  
 在目标数据集上fine-tuning语言模型，以达到适应目标数据集的目的。
 在这一步中使用了两个trick：
 （1）Discriminative fine-tuning
