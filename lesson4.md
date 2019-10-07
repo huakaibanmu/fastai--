@@ -1,4 +1,4 @@
-<font face="黑体">
+<font face="黑体" size=4>
 第四课的学习有以下三个重点：  
 	
 # 1 NLP  
